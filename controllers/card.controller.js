@@ -33,7 +33,7 @@ exports.deleteCard = (req, res) => {
 };
 
 exports.updateCard = (req, res) => {
-    Card.findOneAndUpdate({ id: req.params.id }, { card: req.body.card }, (err, updated) => {
+    Card.findOneAndUpdate({ id: req.params.id }, { card: req.body.card }, { new: true }, (err, updated) => {
         if (err) res.status(500).send(err);
         res.send(updated);
     })
