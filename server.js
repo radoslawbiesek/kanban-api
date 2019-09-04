@@ -1,10 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
-mongoose.promise = global.Promise;
 const bodyParser = require('body-parser');
 
-const cardRoutes = require('./routes/card.routes');
-const columnRoutes = require('./routes/column.routes');
+// Use ES6 Promise
+mongoose.promise = global.Promise;
 
 const app = express();
 
@@ -12,8 +11,10 @@ const app = express();
 app.use(bodyParser.json());
 
 // Connect routes
+const cardRoutes = require('./routes/card.routes');
 app.use('/', cardRoutes);
 
+const columnRoutes = require('./routes/column.routes');
 app.use('/', columnRoutes);
 
 // Import config

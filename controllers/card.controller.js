@@ -1,41 +1,62 @@
 const Card = require('../models/card');
+const Column = require('../models/column');
 const uuid = require('uuid');
 
 exports.getCards = (req, res) => {
-    Card.find({}).exec((err, cards) => {
-        if (err) res.status(500).send(err);
-        res.json({ cards });
-    })
+    Card.find()
+        .exec()
+        .then(cards => res.status(200).json(cards))
+        .catch(err => res.status(500).json(err));
 };
 
 exports.addCard = (req, res) => {
-    const { card, label, columnId } = req.body;
-    if (!card || !columnId) res.status(400).end();
+    const { name, label, columnId } = req.body.card;
+    const cardId = uuid();
+    if (!name || !columnId) res.status(400).end();
     const newCard = new Card({
-        card: card,
+        name: name,
         label: label,
-        id: uuid()
+        id: cardId
     });
 
-    newCard.save((err, saved) => {
-        if (err) res.status(500).send(err);
-        // TO DO - find column, push card id to column.notes array
-        res.send(saved);
-    });
+    newCard
+        .save()
+        .then(() => Column.findOne({ id: columnId })
+        .then(column => {
+            column.cards.push(cardId);
+            column.save();
+        })
+        .then(() => res.status(200).json(newCard))
+        .catch(err => res.status(500).json(err)));
 };
 
 exports.deleteCard = (req, res) => {
-    Card.findOneAndRemove({ id: req.params.id }, (err, removed) => {
-        if (err) res.status(500).send(err);
-        // TO DO - find column, filter column.notes array
-        res.send(removed);
-    })
-};
+    cardId = req.params.id;
+
+    Column.findOne({ cards: { $in: cardId }})
+        .exec()
+        .then(column => {
+            filteredCards = column.cards.filter(id => id !== cardId);
+            column.cards = filteredCards;
+            column.save();
+        })
+        .then(() => Card.findOne({ id: cardId }))
+        .then(card => card.remove())
+        .then(() => res.status(200).end())
+        .catch(err => res.status(500).send(err));
+ };
 
 exports.updateCard = (req, res) => {
-    Card.findOneAndUpdate({ id: req.params.id }, { card: req.body.card }, { new: true }, (err, updated) => {
-        if (err) res.status(500).send(err);
-        res.send(updated);
-    })
+    const { name, columnId } = req.body.card;
+
+    Card.findOneAndUpdate(
+        { id: req.params.id }, 
+        { name: name }, 
+        { new: true }
+    )
+        .exec()
+        .then(updated => res.status(200).send(updated))
+        .catch(err => res.status(500).send(err));
+        // TO DO delete card from old column and add to the new
 };
 
